@@ -28,54 +28,50 @@ Módulos encargados de procesar la lógica de consultas médicas de forma local 
 
 El siguiente diagrama detalla el flujo de comunicación de las aplicaciones cliente a través del API Gateway y cómo interactúa cada microservicio con su respectiva capa de persistencia de datos distribuida:
 
-```plantuml
-@startuml
-skinparam componentStyle uml2
+```mermaid
+graph TB
+  subgraph Frontends ["Frontend Apps"]
+    AdminFE["hospital-admin-frontend"]
+    CentrosFE["hospital-centros-frontend"]
+  end
 
-package "Frontend Apps" {
-  [hospital-admin-frontend] as AdminFE
-  [hospital-centros-frontend] as CentrosFE
-}
+  subgraph CloudCore ["Cloud Core"]
+    Gateway["hospital-api-gateway"]
+    AuthService["hospital-auth-service"]
+    AdminService["hospital-admin-service"]
+    ConsultasBase["hospital-consultas-service"]
+    
+    DBAuth[("DB Auth")]
+    DBAdmin[("DB Admin")]
+    DBConsultas[("DB Consultas Matriz")]
+  end
 
-node "Cloud Core" {
-  component [hospital-api-gateway] as Gateway
-  component [hospital-auth-service] as AuthService
-  component [hospital-admin-service] as AdminService
-  component [hospital-consultas-service] as ConsultasBase
-  
-  database "DB Auth" as DBAuth
-  database "DB Admin" as DBAdmin
-  database "DB Consultas (Matriz)" as DBConsultas
-}
+  subgraph NodosRegionales ["Nodos Regionales"]
+    CSCuenca["hospital-consultas-service-cuenca"]
+    CSGuayaquil["hospital-consultas-service-guayaquil"]
+    CSLatacunga["hospital-consultas-service-latacunga"]
 
-node "Nodos Regionales" {
-  component [hospital-consultas-service-cuenca] as CSCuenca
-  component [hospital-consultas-service-guayaquil] as CSGuayaquil
-  component [hospital-consultas-service-latacunga] as CSLatacunga
+    DBCuenca[Construir "DB Cuenca"]
+    DBGuayaquil[Construir "DB Guayaquil"]
+    DBLatacunga[Construir "DB Latacunga"]
+  end
 
-  database "DB Cuenca" as DBCuenca
-  database "DB Guayaquil" as DBGuayaquil
-  database "DB Latacunga" as DBLatacunga
-}
+  %% Conexiones Clientes a Gateway
+  AdminFE -->|HTTPS| Gateway
+  CentrosFE -->|HTTPS| Gateway
 
-' Conexiones de entrada
-AdminFE --> Gateway : HTTPS
-CentrosFE --> Gateway : HTTPS
+  %% Enrutamiento Gateway
+  Gateway --> AuthService
+  Gateway --> AdminService
+  Gateway --> ConsultasBase
+  Gateway --> CSCuenca
+  Gateway --> CSGuayaquil
+  Gateway --> CSLatacunga
 
-' Rutas del Gateway
-Gateway --> AuthService : /auth
-Gateway --> AdminService : /admin
-Gateway --> ConsultasBase : /consultas
-Gateway --> CSCuenca : /consultas/cuenca
-Gateway --> CSGuayaquil : /consultas/guayaquil
-Gateway --> CSLatacunga : /consultas/latacunga
-
-' Conexiones a Bases de Datos
-AuthService --> DBAuth
-AdminService --> DBAdmin
-ConsultasBase --> DBConsultas
-CSCuenca --> DBCuenca
-CSGuayaquil --> DBGuayaquil
-CSLatacunga --> DBLatacunga
-
-@enduml
+  %% Conexiones a Bases de Datos
+  AuthService --> DBAuth
+  AdminService --> DBAdmin
+  ConsultasBase --> DBConsultas
+  CSCuenca --> DBCuenca
+  CSGuayaquil --> DBGuayaquil
+  CSLatacunga --> DBLatacunga
