@@ -51,9 +51,9 @@ graph TB
     CSGuayaquil["hospital-consultas-service-guayaquil"]
     CSLatacunga["hospital-consultas-service-latacunga"]
 
-    DBCuenca[Construir "DB Cuenca"]
-    DBGuayaquil[Construir "DB Guayaquil"]
-    DBLatacunga[Construir "DB Latacunga"]
+    DBCuenca[("DB Cuenca")]
+    DBGuayaquil[("DB Guayaquil")]
+    DBLatacunga[("DB Latacunga")]
   end
 
   %% Conexiones Clientes a Gateway
