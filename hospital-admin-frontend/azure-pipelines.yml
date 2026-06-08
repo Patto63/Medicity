@@ -1,0 +1,41 @@
+# Node.js con React para despliegue a Azure Linux Web App
+# Construye un proyecto Node.js con React y lo despliega a una Azure Linux Web App.
+
+trigger:
+- feature/frontendAdministrador
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Instalar Node.js'
+
+- script: |
+    npm install
+    npm run build
+  displayName: 'Ejecutar npm install y build'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)/dist'
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  displayName: 'Copiar archivos de dist al directorio de staging'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'dist'
+    publishLocation: 'Container'
+  displayName: 'Publicar artefactos de construcción'
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<Nombre-de-tu-suscripción-de-Azure>'
+    appType: 'webAppLinux'
+    appName: '<Nombre-de-tu-Web-App>'
+    package: '$(Build.ArtifactStagingDirectory)/**'
+  displayName: 'Desplegar a Azure Linux Web App'
